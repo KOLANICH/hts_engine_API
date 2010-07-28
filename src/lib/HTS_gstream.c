@@ -62,12 +62,14 @@ void HTS_GStreamSet_initialize(HTS_GStreamSet * gss)
 void HTS_GStreamSet_create(HTS_GStreamSet * gss, HTS_PStreamSet * pss,
                            int stage, HTS_Boolean use_log_gain,
                            int sampling_rate, int fperiod, double alpha,
-                           double beta, int audio_buff_size)
+                           double beta, int audio_buff_size,
+                           HTS_SynthCallback callback, void *user_data)
 {
    int i, j, k;
 #ifdef HTS_EMBEDDED
    double lf0;
 #endif                          /* HTS_EMBEDDED */
+   int cont_synth=1;
    int msd_frame;
    HTS_Vocoder v;
 
@@ -133,7 +135,7 @@ void HTS_GStreamSet_create(HTS_GStreamSet * gss, HTS_PStreamSet * pss,
    HTS_Vocoder_initialize(&v, HTS_PStreamSet_get_static_length(pss, 0) - 1,
                           stage, use_log_gain, sampling_rate, fperiod,
                           audio_buff_size);
-   for (i = 0, msd_frame = 0; i < gss->total_frame; i++) {
+   for (i = 0, msd_frame = 0; cont_synth&&(i < gss->total_frame); i++) {
       lf0 = LZERO;
       if (HTS_PStreamSet_get_msd_flag(pss, 1, i))
          lf0 = HTS_PStreamSet_get_parameter(pss, 1, msd_frame++, 0);
@@ -141,16 +143,20 @@ void HTS_GStreamSet_create(HTS_GStreamSet * gss, HTS_PStreamSet * pss,
                              lf0,
                              HTS_PStreamSet_get_parameter_vector(pss, 0, i),
                              alpha, beta, &gss->gspeech[i * fperiod]);
+      if(callback)
+        cont_synth=callback(&gss->gspeech[i * fperiod], fperiod, user_data);
    }
 #else
    HTS_Vocoder_initialize(&v, gss->gstream[0].static_length - 1, stage,
                           use_log_gain, sampling_rate, fperiod,
                           audio_buff_size);
-   for (i = 0; i < gss->total_frame; i++) {
+   for (i = 0; cont_synth&&(i < gss->total_frame); i++) {
       HTS_Vocoder_synthesize(&v, gss->gstream[0].static_length - 1,
                              gss->gstream[1].par[i][0],
                              &gss->gstream[0].par[i][0], alpha, beta,
                              &gss->gspeech[i * fperiod]);
+      if(callback)
+        cont_synth=callback(&gss->gspeech[i * fperiod], fperiod, user_data);
    }
 #endif                          /* HTS_EMBEDDED */
    HTS_Vocoder_clear(&v);

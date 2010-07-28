@@ -505,6 +505,9 @@ HTS_Boolean HTS_PStreamSet_is_msd(HTS_PStreamSet * pss, int stream_index);
 /* HTS_PStreamSet_clear: free parameter stream set */
 void HTS_PStreamSet_clear(HTS_PStreamSet * pss);
 
+/* user callback function for streaming synthesis */
+typedef int (*HTS_SynthCallback)(const short *samples, int nsamples, void* user_data);
+
 /*  -------------------------- gstream ----------------------------  */
 
 #ifndef HTS_EMBEDDED
@@ -535,7 +538,8 @@ void HTS_GStreamSet_initialize(HTS_GStreamSet * gss);
 void HTS_GStreamSet_create(HTS_GStreamSet * gss, HTS_PStreamSet * pss,
                            int stage, HTS_Boolean use_log_gain,
                            int sampling_rate, int fperiod, double alpha,
-                           double beta, int audio_buff_size);
+                           double beta, int audio_buff_size,
+                           HTS_SynthCallback callback, void *user_data);
 
 /* HTS_GStreamSet_get_total_nsample: get total number of sample */
 int HTS_GStreamSet_get_total_nsample(HTS_GStreamSet * gss);
@@ -571,6 +575,8 @@ typedef struct _HTS_Global {
    double alpha;                /* all-pass constant */
    double beta;                 /* postfiltering coefficient */
    int audio_buff_size;         /* audio buffer size (for audio device) */
+   HTS_SynthCallback synth_callback; /* for streaming synthesis */
+  void *user_data; /* for streaming synthesis */
    double *msd_threshold;       /* MSD thresholds */
    double *duration_iw;         /* weights for duration interpolation */
    double **parameter_iw;       /* weights for parameter interpolation */
@@ -652,6 +658,12 @@ void HTS_Engine_set_audio_buff_size(HTS_Engine * engine, int i);
 
 /* HTS_Engine_get_audio_buff_size: get audio buffer size */
 int HTS_Engine_get_audio_buff_size(HTS_Engine * engine);
+
+/* HTS_Engine_set_SynthCallback: set user callback function for streaming synthesis */
+void HTS_Engine_set_SynthCallback(HTS_Engine *engine, HTS_SynthCallback callback);
+
+/* HTS_Engine_set_user_data: set user data for streaming synthesis */
+void HTS_Engine_set_user_data(HTS_Engine *engine, void *user_data);
 
 /* HTS_Egnine_set_msd_threshold: set MSD threshold */
 void HTS_Engine_set_msd_threshold(HTS_Engine * engine, int stream_index,
