@@ -25,7 +25,7 @@ local_env.Append(CPPDEFINES=("AUDIO_PLAY_NONE","1"))
 if sys.byteorder=="big":
     local_env.Append(CPPDEFINES=("WORDS_BIGENDIAN","1"))
 src=Glob(os.path.join("lib","*.c"))
-if env["PLATFORM"]=="win32":
+if env["PLATFORM"]=="win32" or env["enable_shared"]=="yes":
     objects=local_env.SharedObject(src)
 else:
     objects=local_env.StaticObject(src)
