@@ -95,7 +95,9 @@ void HTS_get_copyright(char *str);
 
 /*  -------------------------- audio ------------------------------  */
 
-#if !defined(AUDIO_PLAY_WINCE) && !defined(AUDIO_PLAY_WIN32) && !defined(AUDIO_PLAY_PORTAUDIO) && !defined(AUDIO_PLAY_NONE)
+#define AUDIO_PLAY_CALLER
+
+#if !defined(AUDIO_PLAY_WINCE) && !defined(AUDIO_PLAY_WIN32) && !defined(AUDIO_PLAY_PORTAUDIO) && !defined(AUDIO_PLAY_NONE) && !defined(AUDIO_PLAY_CALLER)
 #if defined(__WINCE__) || defined(_WINCE) || defined(_WINCE) || defined(__WINCE)
 #define AUDIO_PLAY_WINCE
 #elif defined(__WIN32__) || defined(__WIN32) || defined(_WIN32) || defined(WIN32) || defined(__CYGWIN__) || defined(__MINGW32__)
@@ -144,6 +146,13 @@ typedef struct _HTS_Audio {
    int i;                       /* make compiler happy */
 } HTS_Audio;
 #endif                          /* AUDIO_PLAY_NONE */
+
+/* HTS_Audio: audio output defined by the caller */
+#ifdef AUDIO_PLAY_CALLER
+typedef struct _HTS_Audio {
+   void* data;
+} HTS_Audio;
+#endif                          /* AUDIO_PLAY_CALLER */
 
 /*  ------------------------ audio method -------------------------  */
 
