@@ -245,7 +245,7 @@ size_t HTS_ftell(HTS_File * fp)
    } else if (fp->type == HTS_FILE) {
       fpos_t pos;
       fgetpos((FILE *) fp->pointer, &pos);
-#if defined(_WIN32) || defined(__APPLE__)
+#if defined(_WIN32) || defined(__CYGWIN__) || defined(__APPLE__)
       return (size_t) pos;
 #else
       return (size_t) pos.__pos;
@@ -515,11 +515,14 @@ HTS_Boolean HTS_get_token_from_string_with_separator(const char *str, size_t * i
 /* HTS_calloc: wrapper for calloc */
 void *HTS_calloc(const size_t num, const size_t size)
 {
+   size_t n = num * size;
 #ifdef FESTIVAL
-   void *mem = (void *) safe_wcalloc(num * size);
+   void *mem = (void *) safe_wcalloc(n);
 #else
-   void *mem = (void *) calloc(num, size);
+   void *mem = (void *) malloc(n);
 #endif                          /* FESTIVAL */
+
+   memset(mem, 0, n);
 
    if (mem == NULL)
       HTS_error(1, "HTS_calloc: Cannot allocate memory.\n");
