@@ -205,13 +205,18 @@ static HTS_Boolean HTS_Question_load(HTS_Question * question, HTS_File * fp)
 }
 
 /* HTS_Question_match: check given string match given question */
-static HTS_Boolean HTS_Question_match(const HTS_Question * question, const char *string)
+static HTS_Boolean HTS_Question_match(const HTS_Question * question, const char *string, const RHVoice_parsed_label_string* parsed)
 {
    HTS_Pattern *pattern;
 
-   for (pattern = question->head; pattern; pattern = pattern->next)
-      if (HTS_pattern_match(string, pattern->string))
+   for (pattern = question->head; pattern; pattern = pattern->next) {
+     if(parsed!=NULL) {
+       if(RHVoice_question_match(parsed, pattern->string))
          return TRUE;
+}
+     else if (HTS106_pattern_match(string, pattern->string))
+         return TRUE;
+   }
 
    return FALSE;
 }
@@ -1076,8 +1081,8 @@ HTS_Boolean HTS_ModelSet_use_gv(HTS_ModelSet * ms, int stream_index)
    return FALSE;
 }
 
-/* HTS_ModelSet_get_duration_index: get index of duration tree and PDF */
-void HTS_ModelSet_get_duration_index(HTS_ModelSet * ms, char *string, int *tree_index, int *pdf_index, int interpolation_index)
+/* HTS106_ModelSet_get_duration_index: get index of duration tree and PDF */
+void HTS_ModelSet_get_duration_index(HTS_ModelSet * ms, char *string, const RHVoice_parsed_label_string* parsed, int *tree_index, int *pdf_index, int interpolation_index)
 {
    HTS_Tree *tree;
    HTS_Pattern *pattern;
@@ -1104,11 +1109,11 @@ void HTS_ModelSet_get_duration_index(HTS_ModelSet * ms, char *string, int *tree_
       HTS_error(1, "HTS_ModelSet_get_duration_index: Cannot find model %s.\n", string);
       return;
    }
-   (*pdf_index) = HTS_Tree_search_node(tree, string);
+   (*pdf_index) = HTS_Tree_search_node(tree, string, parsed);
 }
 
-/* HTS_ModelSet_get_duration: get duration using interpolation weight */
-void HTS_ModelSet_get_duration(HTS_ModelSet * ms, char *string, double *mean, double *vari, double *iw)
+/* HTS106_ModelSet_get_duration: get duration using interpolation weight */
+void HTS_ModelSet_get_duration(HTS_ModelSet * ms, char *string, const RHVoice_parsed_label_string* parsed, double *mean, double *vari, double *iw)
 {
    int i, j;
    int tree_index, pdf_index;
@@ -1119,7 +1124,7 @@ void HTS_ModelSet_get_duration(HTS_ModelSet * ms, char *string, double *mean, do
       vari[i] = 0.0;
    }
    for (i = 0; i < ms->duration.interpolation_size; i++) {
-      HTS_ModelSet_get_duration_index(ms, string, &tree_index, &pdf_index, i);
+     HTS_ModelSet_get_duration_index(ms, string, parsed, &tree_index, &pdf_index, i);
       for (j = 0; j < ms->nstate; j++) {
          mean[j] += iw[i] * ms->duration.model[i].pdf[tree_index][pdf_index][j];
          vari[j] += iw[i] * iw[i] * ms->duration.model[i].pdf[tree_index][pdf_index][j + vector_length];
@@ -1127,8 +1132,8 @@ void HTS_ModelSet_get_duration(HTS_ModelSet * ms, char *string, double *mean, do
    }
 }
 
-/* HTS_ModelSet_get_parameter_index: get index of parameter tree and PDF */
-void HTS_ModelSet_get_parameter_index(HTS_ModelSet * ms, char *string, int *tree_index, int *pdf_index, int stream_index, int state_index, int interpolation_index)
+/* HTS106_ModelSet_get_parameter_index: get index of parameter tree and PDF */
+void HTS_ModelSet_get_parameter_index(HTS_ModelSet * ms, char *string, const RHVoice_parsed_label_string* parsed, int *tree_index, int *pdf_index, int stream_index, int state_index, int interpolation_index)
 {
    HTS_Tree *tree;
    HTS_Pattern *pattern;
@@ -1157,11 +1162,11 @@ void HTS_ModelSet_get_parameter_index(HTS_ModelSet * ms, char *string, int *tree
       HTS_error(1, "HTS_ModelSet_get_parameter_index: Cannot find model %s.\n", string);
       return;
    }
-   (*pdf_index) = HTS_Tree_search_node(tree, string);
+   (*pdf_index) = HTS_Tree_search_node(tree, string, parsed);
 }
 
 /* HTS_ModelSet_get_parameter: get parameter using interpolation weight */
-void HTS_ModelSet_get_parameter(HTS_ModelSet * ms, char *string, double *mean, double *vari, double *msd, int stream_index, int state_index, double *iw)
+void HTS_ModelSet_get_parameter(HTS_ModelSet * ms, char *string, const RHVoice_parsed_label_string* parsed, double *mean, double *vari, double *msd, int stream_index, int state_index, double *iw)
 {
    int i, j;
    int tree_index, pdf_index;
@@ -1174,7 +1179,7 @@ void HTS_ModelSet_get_parameter(HTS_ModelSet * ms, char *string, double *mean, d
    if (msd)
       *msd = 0.0;
    for (i = 0; i < ms->stream[stream_index].interpolation_size; i++) {
-      HTS_ModelSet_get_parameter_index(ms, string, &tree_index, &pdf_index, stream_index, state_index, i);
+     HTS_ModelSet_get_parameter_index(ms, string, parsed, &tree_index, &pdf_index, stream_index, state_index, i);
       for (j = 0; j < vector_length; j++) {
          mean[j] += iw[i] * ms->stream[stream_index].model[i].pdf[tree_index][pdf_index][j];
          vari[j] += iw[i] * iw[i] * ms->stream[stream_index].model[i]
@@ -1218,7 +1223,7 @@ void HTS_ModelSet_get_gv_index(HTS_ModelSet * ms, char *string, int *tree_index,
       HTS_error(1, "HTS_ModelSet_get_gv_index: Cannot find model %s.\n", string);
       return;
    }
-   (*pdf_index) = HTS_Tree_search_node(tree, string);
+   (*pdf_index) = HTS_Tree_search_node(tree, string, NULL);
 }
 
 /* HTS_ModelSet_get_gv: get GV using interpolation weight */
@@ -1270,7 +1275,7 @@ void HTS_ModelSet_get_gv_switch_index(HTS_ModelSet * ms, char *string, int *tree
       HTS_error(1, "HTS_ModelSet_get_gv_switch_index: Cannot find model %s.\n", string);
       return;
    }
-   (*pdf_index) = HTS_Tree_search_node(tree, string);
+   (*pdf_index) = HTS_Tree_search_node(tree, string, NULL);
 }
 
 /* HTS_ModelSet_get_gv_switch: get GV switch */

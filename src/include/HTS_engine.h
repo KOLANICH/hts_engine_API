@@ -57,6 +57,8 @@ HTS_ENGINE_H_START;
 
 #include <stdio.h>
 
+#include "core/question_matcher.h"
+
 /*  -------------------------- common -----------------------------  */
 
 typedef int HTS_Boolean;
@@ -305,16 +307,16 @@ int HTS_ModelSet_get_gv_interpolation_size(HTS_ModelSet * ms, int stream_index);
 HTS_Boolean HTS_ModelSet_use_gv(HTS_ModelSet * ms, int index);
 
 /* HTS_ModelSet_get_duration_index: get index of duration tree and PDF */
-void HTS_ModelSet_get_duration_index(HTS_ModelSet * ms, char *string, int *tree_index, int *pdf_index, int interpolation_index);
+void HTS_ModelSet_get_duration_index(HTS106_ModelSet * ms, char *string, const RHVoice_parsed_label_string* parsed, int *tree_index, int *pdf_index, int interpolation_index);
 
 /* HTS_ModelSet_get_duration: get duration using interpolation weight */
-void HTS_ModelSet_get_duration(HTS_ModelSet * ms, char *string, double *mean, double *vari, double *iw);
+void HTS_ModelSet_get_duration(HTS106_ModelSet * ms, char *string, const RHVoice_parsed_label_string* parsed, double *mean, double *vari, double *iw);
 
-/* HTS_ModelSet_get_parameter_index: get index of parameter tree and PDF */
-void HTS_ModelSet_get_parameter_index(HTS_ModelSet * ms, char *string, int *tree_index, int *pdf_index, int stream_index, int state_index, int interpolation_index);
+/* HTS106_ModelSet_get_parameter_index: get index of parameter tree and PDF */
+void HTS106_ModelSet_get_parameter_index(HTS106_ModelSet * ms, char *string, const RHVoice_parsed_label_string* parsed, int *tree_index, int *pdf_index, int stream_index, int state_index, int interpolation_index);
 
 /* HTS_ModelSet_get_parameter: get parameter using interpolation weight */
-void HTS_ModelSet_get_parameter(HTS_ModelSet * ms, char *string, double *mean, double *vari, double *msd, int stream_index, int state_index, double *iw);
+void HTS_ModelSet_get_parameter(HTS106_ModelSet * ms, char *string, const RHVoice_parsed_label_string* parsed, double *mean, double *vari, double *msd, int stream_index, int state_index, double *iw);
 
 /* HTS_ModelSet_get_gv: get GV using interpolation weight */
 void HTS_ModelSet_get_gv(HTS_ModelSet * ms, char *string, double *mean, double *vari, int stream_index, double *iw);
